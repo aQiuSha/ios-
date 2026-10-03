@@ -63,6 +63,8 @@ targets:
         SWIFT_OBJC_BRIDGING_HEADER: Services/libarchiveBridge.h
         # 链接系统库
         OTHER_LDFLAGS: "-larchive"
+        # libarchive 头文件搜索路径
+        HEADER_SEARCH_PATHS: "$(SDKROOT)/usr/include"
         # App Group（Widget 共享数据）
         INFOPLIST_KEY_ComicReaderAppGroup: group.com.comicreader.shared
     dependencies:
