@@ -125,14 +125,14 @@ struct BookmarksView: View {
                 }
                 Text(bookmark.timeAgo)
                     .font(.caption2)
-                    .foregroundColor(.tertiary)
+                    .foregroundStyle(.tertiary)
             }
 
             Spacer()
 
             if onJumpToPage != nil {
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.tertiary)
+                    .foregroundStyle(.tertiary)
             }
         }
         .padding(.vertical, 4)

@@ -74,7 +74,7 @@ struct ComicDetailView: View {
                 }
 
                 NavigationLink {
-                    BookmarksView(comic: comic)
+                    BookmarksView(comic: comic, modelContext: modelContext)
                 } label: {
                     HStack {
                         Image(systemName: "bookmark")

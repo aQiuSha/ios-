@@ -94,11 +94,11 @@ final class ReaderViewModel: ObservableObject {
             let numKey = NSNumber(value: idx)
             if rawCache.object(forKey: numKey) != nil { continue }
             let url = pageURLs[idx]
-            preloadQueue.async {
+            preloadQueue.async { [weak self] in
                 // 在后台解码图片
                 if let image = UIImage(contentsOfFile: url.path) {
                     // NSCache 线程安全，可直接写入
-                    rawCache.setObject(image, forKey: numKey)
+                    self?.rawCache.setObject(image, forKey: numKey)
                 }
             }
         }

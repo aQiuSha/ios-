@@ -18,8 +18,8 @@ final class PrivacyAuthService: ObservableObject {
     /// 自动锁定时长（秒）：5 分钟
     private let lockTimeout: TimeInterval = 300
 
-    /// 生物识别策略：优先生物识别，失败回退到设备密码
-    private let policy: LAPolicy = .deviceOwnerAuthenticationWithBiometricsOrPasscode
+    /// 生物识别策略：生物识别+设备密码
+    private let policy: LAPolicy = .deviceOwnerAuthentication
 
     // MARK: - 公开方法
 
@@ -27,24 +27,21 @@ final class PrivacyAuthService: ObservableObject {
     /// - Parameter reason: 验证提示文案
     /// - Returns: 验证是否成功
     func authenticate(reason: String) async -> Bool {
-        // LAContext.evaluatePolicy 需在主线程调用
-        return await MainActor.run {
-            let context = LAContext()
-            var error: NSError?
+        let context = LAContext()
+        var error: NSError?
 
-            // 检查设备是否支持生物识别或密码验证
-            guard context.canEvaluatePolicy(policy, error: &error) else {
-                return false
-            }
+        // 检查设备是否支持生物识别或密码验证
+        guard context.canEvaluatePolicy(policy, error: &error) else {
+            return false
+        }
 
-            return await withCheckedContinuation { continuation in
-                context.evaluatePolicy(policy, localizedReason: reason) { success, _ in
-                    if success {
-                        self.isUnlocked = true
-                        self.unlockTime = Date()
-                    }
-                    continuation.resume(returning: success)
+        return await withCheckedContinuation { continuation in
+            context.evaluatePolicy(policy, localizedReason: reason) { [weak self] success, _ in
+                if success {
+                    self?.isUnlocked = true
+                    self?.unlockTime = Date()
                 }
+                continuation.resume(returning: success)
             }
         }
     }

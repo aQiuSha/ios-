@@ -1,7 +1,6 @@
 import UIKit
 import CoreImage
 import CoreImage.CIFilterBuiltins
-import Vision
 
 /// AI 画质增强服务
 ///
@@ -84,7 +83,7 @@ final class ImageEnhancerService {
 
         // 2. 智能锐化（Unsharp Mask，比普通锐化更自然）
         let sharpenIntensity: Float
-        let sharpenRadius: Double
+        let sharpenRadius: Float
         switch level {
         case .light:
             sharpenIntensity = 0.5
@@ -146,28 +145,10 @@ final class ImageEnhancerService {
 
     // MARK: - Vision AI 增强
 
-    /// 使用 Vision 框架的 AI 图像增强（iOS 18+）
-    /// iOS 17 退回 nil，由调用方使用 Core Image 管线
+    /// Vision AI 增强（iOS 18+ 才有 VNGenerateImageEnhancementRequest，iOS 17 不可用）
+    /// 当前统一使用 Core Image 管线，此方法保留为占位
     private func applyVisionAIEnhancement(_ image: UIImage) -> UIImage? {
-        guard #available(iOS 18.0, *) else { return nil }
-        guard let cgImage = image.cgImage else { return nil }
-
-        let request = VNGenerateImageEnhancementRequest()
-        request.level = .balanced
-
-        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-        do {
-            try handler.perform([request])
-            guard let observation = request.results?.first else { return nil }
-            let enhancedCIImage = observation.image
-            guard let enhancedCGImage = ciContext.createCGImage(enhancedCIImage, from: enhancedCIImage.extent) else {
-                return nil
-            }
-            return UIImage(cgImage: enhancedCGImage, scale: image.scale, orientation: image.imageOrientation)
-        } catch {
-            print("Vision AI enhancement failed: \(error)")
-            return nil
-        }
+        return nil
     }
 
     // MARK: - 超分辨率

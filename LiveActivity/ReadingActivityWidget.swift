@@ -76,7 +76,7 @@ struct ReadingActivityWidget: Widget {
 /// 锁屏实时活动视图
 @available(iOS 16.1, *)
 private struct LockScreenLiveActivityView: View {
-    let context: ActivityViewContext<ReadingActivityAttributes>
+    let context: ActivityView.Context<ReadingActivityAttributes>
 
     var body: some View {
         VStack(spacing: 12) {

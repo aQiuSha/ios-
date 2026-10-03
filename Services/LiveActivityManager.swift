@@ -147,7 +147,7 @@ final class LiveActivityManager: ObservableObject {
     private func startDurationTimer() {
         stopDurationTimer()
         durationTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 self?.tickDuration()
             }
         }

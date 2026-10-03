@@ -101,7 +101,7 @@ struct ComicReaderApp: App {
 
         switch url.host {
         case "continue":
-            openContinueReading()
+            Task { @MainActor in openContinueReading() }
 
         case "comic":
             // 路径格式：/comic/{uuid}

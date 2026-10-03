@@ -668,10 +668,11 @@ struct ReaderView: View {
     // MARK: - 书签操作
 
     private func checkBookmarkStatus() {
+        let comicID = comic.id
         let descriptor = FetchDescriptor<Bookmark>(
             predicate: #Predicate { bookmark in
                 bookmark.page == viewModel.currentPage &&
-                bookmark.comic?.persistentModelID == comic.persistentModelID
+                bookmark.comic?.id == comicID
             }
         )
         let count = (try? modelContext.fetchCount(descriptor)) ?? 0
@@ -684,7 +685,7 @@ struct ReaderView: View {
             let descriptor = FetchDescriptor<Bookmark>(
                 predicate: #Predicate { bookmark in
                     bookmark.page == viewModel.currentPage &&
-                    bookmark.comic?.persistentModelID == comic.persistentModelID
+                    bookmark.comic?.id == comic.id
                 }
             )
             if let bookmarks = try? modelContext.fetch(descriptor) {
