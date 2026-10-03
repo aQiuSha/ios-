@@ -86,12 +86,11 @@ targets:
         excludes:
           - "WIDGET_SETUP.md"
           - "Shared/WidgetSyncManager.swift"
+          - "Info.plist"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.comicreader.app.widget
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: 阿邱鲨小组件
-        INFOPLIST_KEY_NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        INFOPLIST_FILE: Widget/Info.plist
         INFOPLIST_KEY_ComicReaderAppGroup: group.com.comicreader.shared
     dependencies:
       - package: ZIPFoundation
