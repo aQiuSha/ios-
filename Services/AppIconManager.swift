@@ -85,6 +85,7 @@ final class AppIconManager: ObservableObject {
         do {
             try await UIApplication.shared.setAlternateIconName(targetName)
             refreshCurrentIcon()
+            AchievementService.shared.unlock(.customizer)
         } catch {
             print("⚠️ 切换 App 图标失败: \(error.localizedDescription)")
             throw error

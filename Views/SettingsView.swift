@@ -15,6 +15,18 @@ struct SettingsView: View {
     // 翻页动画
     @AppStorage("pageTransition") private var pageTransitionRaw = PageTransition.slide.rawValue
 
+    // 阅读布局 / 自动翻页 / 音量键
+    @AppStorage("readerLayout") private var readerLayoutRaw = ReaderLayout.paged.rawValue
+    @AppStorage("autoFlipSpeed") private var autoFlipSpeedRaw = AutoFlipSpeed.off.rawValue
+    @AppStorage("volumeKeyFlip") private var volumeKeyFlip = false
+
+    // App 密码锁
+    @State private var showSetPIN = false
+    @State private var showDisableLockConfirmation = false
+
+    // iCloud 同步
+    @AppStorage("iCloudSyncEnabled") private var iCloudSyncEnabled = false
+
     // 图片预处理
     @AppStorage("autoCropWhiteBorder") private var autoCropWhiteBorder = false
     @AppStorage("enhanceContrast") private var enhanceContrast = false
@@ -68,6 +80,32 @@ struct SettingsView: View {
                         ForEach(PageMode.allCases, id: \.self) { mode in
                             Text(mode.displayName).tag(mode.rawValue)
                         }
+                    }
+
+                    Picker("阅读布局", selection: $readerLayoutRaw) {
+                        ForEach(ReaderLayout.allCases, id: \.self) { layout in
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(layout.displayName)
+                                Text(layout.description)
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                            .tag(layout.rawValue)
+                        }
+                    }
+                    .pickerStyle(.menu)
+
+                    Picker("自动翻页", selection: $autoFlipSpeedRaw) {
+                        ForEach(AutoFlipSpeed.allCases, id: \.self) { speed in
+                            Text(speed.displayName).tag(speed.rawValue)
+                        }
+                    }
+
+                    Toggle("音量键翻页", isOn: $volumeKeyFlip)
+                    if volumeKeyFlip {
+                        Text("按音量+下一页，音量-上一页。系统音量不会改变。")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                 }
 
@@ -303,6 +341,63 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                 }
 
+                // MARK: - App 密码锁
+                Section("App 密码锁") {
+                    if AppLockService.shared.isEnabled && AppLockService.shared.hasPIN {
+                        Toggle("启用密码锁", isOn: Binding(
+                            get: { AppLockService.shared.isEnabled },
+                            set: { AppLockService.shared.isEnabled = $0 }
+                        ))
+                        Toggle("生物识别解锁（\(AppLockService.shared.biometricTypeName)）", isOn: Binding(
+                            get: { AppLockService.shared.biometricEnabled },
+                            set: { AppLockService.shared.biometricEnabled = $0 }
+                        ))
+                        .disabled(AppLockService.shared.biometricType == .none)
+                        Button(role: .destructive) {
+                            showDisableLockConfirmation = true
+                        } label: {
+                            Label("关闭密码锁", systemImage: "lock.slash")
+                        }
+                    } else {
+                        Button {
+                            showSetPIN = true
+                        } label: {
+                            Label("设置 PIN 码密码锁", systemImage: "lock")
+                        }
+                    }
+                    Text("启用后每次打开 App 需输入 PIN 码或生物识别验证，30 秒内重新打开无需重复验证。")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .alert("关闭密码锁", isPresented: $showDisableLockConfirmation) {
+                    Button("取消", role: .cancel) {}
+                    Button("关闭", role: .destructive) {
+                        AppLockService.shared.clearLock()
+                    }
+                } message: {
+                    Text("确定要关闭 App 密码锁吗？PIN 码将被清除。")
+                }
+
+                // MARK: - iCloud 同步
+                Section("iCloud 同步") {
+                    Toggle("启用 iCloud 同步", isOn: Binding(
+                        get: { iCloudSyncEnabled },
+                        set: {
+                            iCloudSyncEnabled = $0
+                            ICloudSyncService.shared.isEnabled = $0
+                        }
+                    ))
+                    .disabled(!ICloudSyncService.shared.isAvailable)
+                    if !ICloudSyncService.shared.isAvailable {
+                        Text("当前未登录 iCloud 或未启用 iCloud 功能。请在系统设置中登录 iCloud。")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    }
+                    Text("同步阅读进度到 iCloud，多设备间自动同步。仅同步进度数据，不同步漫画文件。")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
                 // MARK: - 灵动岛与实时活动
                 Section("灵动岛与锁屏") {
                     Toggle("启用实时活动", isOn: $liveActivityManager.isEnabled)
@@ -468,6 +563,13 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showWiFiTransfer) {
                 WiFiTransferView(modelContext: modelContext)
+            }
+            .sheet(isPresented: $showSetPIN) {
+                NavigationStack {
+                    SetPINView {
+                        showSetPIN = false
+                    }
+                }
             }
         }
     }

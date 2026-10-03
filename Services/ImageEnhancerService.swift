@@ -33,6 +33,11 @@ final class ImageEnhancerService {
         let level = currentLevel
         guard level != .off else { return image }
 
+        // 成就：使用 AI 画质增强
+        if level.usesAI {
+            AchievementService.shared.unlock(.aiEnhancer)
+        }
+
         var result = image
 
         // 第一步：Core Image 漫画优化管线（所有非 off 级别都应用，参数按级别递增）

@@ -220,3 +220,53 @@ enum ImageEnhanceLevel: String, Codable, CaseIterable {
         self == .strong
     }
 }
+
+// MARK: - 阅读布局
+
+/// 阅读器布局模式
+enum ReaderLayout: String, Codable, CaseIterable {
+    case paged      // 分页翻页（传统漫画）
+    case webtoon    // 条漫模式（长图连续滚动）
+
+    var displayName: String {
+        switch self {
+        case .paged: return "分页模式"
+        case .webtoon: return "条漫模式"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .paged: return "左右翻页，适合传统漫画"
+        case .webtoon: return "上下连续滚动，适合条漫/长图"
+        }
+    }
+}
+
+// MARK: - 自动翻页
+
+/// 自动翻页速度
+enum AutoFlipSpeed: String, Codable, CaseIterable {
+    case off
+    case slow
+    case normal
+    case fast
+
+    var displayName: String {
+        switch self {
+        case .off: return "关闭"
+        case .slow: return "慢速（15秒）"
+        case .normal: return "正常（10秒）"
+        case .fast: return "快速（5秒）"
+        }
+    }
+
+    var interval: TimeInterval? {
+        switch self {
+        case .off: return nil
+        case .slow: return 15
+        case .normal: return 10
+        case .fast: return 5
+        }
+    }
+}

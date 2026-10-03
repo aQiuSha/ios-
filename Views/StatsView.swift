@@ -29,6 +29,32 @@ struct StatsView: View {
                     if !viewModel.stats.comicRankings.isEmpty {
                         comicRankingCard
                     }
+
+                    // 成就入口
+                    NavigationLink {
+                        AchievementsView()
+                    } label: {
+                        HStack {
+                            Image(systemName: "trophy")
+                                .font(.title3)
+                                .foregroundColor(.orange)
+                                .frame(width: 32)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("阅读成就")
+                                    .font(.headline)
+                                Text("已解锁 \(AchievementService.shared.progress.unlocked) / \(AchievementService.shared.progress.total) 个成就")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondary)
+                        }
+                        .padding()
+                        .background(Color(UIColor.secondarySystemBackground))
+                        .cornerRadius(12)
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(16)
             }

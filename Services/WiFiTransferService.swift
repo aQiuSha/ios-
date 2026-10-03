@@ -56,6 +56,7 @@ final class WiFiTransferService: NSObject {
 
         listener.start(queue: queue)
         self.listener = listener
+        AchievementService.shared.unlock(.wifiTransfer)
     }
 
     func stop() {

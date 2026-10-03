@@ -19,6 +19,9 @@ struct ComicReaderApp: App {
     /// App 生命周期状态（用于在后台时同步 Widget 数据）
     @Environment(\.scenePhase) private var scenePhase
 
+    /// 是否需要密码锁验证
+    @State private var showAppLock = false
+
     /// 全局强调色（从 UserDefaults 读取）
     private var accentColor: Color {
         let raw = UserDefaults.standard.string(forKey: "accentColor") ?? AccentColor.blue.rawValue
@@ -42,33 +45,24 @@ struct ComicReaderApp: App {
 
     var body: some Scene {
         WindowGroup {
-            LibraryView(modelContext: ModelContext(container))
-                // 全局强调色
-                .tint(accentColor)
-                // 处理 URL Scheme 深度链接
-                .onOpenURL { url in
-                    handleDeepLink(url)
+            ZStack {
+                LibraryView(modelContext: ModelContext(container))
+                    // 全局强调色
+                    .tint(accentColor)
+                    // 处理 URL Scheme 深度链接
+                    .onOpenURL { url in
+                        handleDeepLink(url)
+                    }
+
+                // App 密码锁覆盖层
+                if showAppLock {
+                    AppLockView {
+                        showAppLock = false
+                    }
+                    .transition(.opacity)
                 }
-                // ──────────────────────────────────────────────
-                // 深度链接 / App Intent 集成说明：
-                //
-                // 本 App 通过 NotificationCenter 通知 LibraryView 打开漫画：
-                // - Widget 点击 / comicreader://continue / AppIntent → 发送 .openComicFromIntent
-                // - comicreader://stats → 发送 .showStatsFromDeepLink
-                //
-                // LibraryView 需添加以下监听代码（由 Organizer 统一接入）：
-                //
-                //   .onReceive(NotificationCenter.default.publisher(for: .openComicFromIntent)) { note in
-                //       guard let comicID = note.userInfo?["comicID"] as? UUID else { return }
-                //       if let comic = viewModel.comics.first(where: { $0.id == comicID }) {
-                //           selectedComic = comic  // 触发 fullScreenCover 打开 ReaderView
-                //       }
-                //   }
-                //   .onReceive(NotificationCenter.default.publisher(for: .showStatsFromDeepLink)) { _ in
-                //       showStats = true  // 触发 StatsView sheet
-                //   }
-                //
-                // ──────────────────────────────────────────────
+            }
+            .animation(.easeInOut, value: showAppLock)
         }
         .modelContainer(container)
         .onChange(of: scenePhase) { _, newPhase in
@@ -76,10 +70,21 @@ struct ComicReaderApp: App {
             if newPhase == .background {
                 syncWidgetData()
             }
-            // App 回到前台时也刷新一次（确保 Widget 数据最新）
+            // App 回到前台时检查是否需要密码锁
             if newPhase == .active {
                 syncWidgetData()
+                checkAppLock()
             }
+        }
+        .onAppear {
+            checkAppLock()
+        }
+    }
+
+    /// 检查是否需要显示密码锁
+    private func checkAppLock() {
+        if AppLockService.shared.needsAuthentication {
+            showAppLock = true
         }
     }
 

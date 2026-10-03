@@ -38,6 +38,9 @@ struct ReaderView: View {
     @AppStorage("autoNightMode") private var autoNightMode = false
     @AppStorage("pageTransition") private var pageTransitionRaw = PageTransition.slide.rawValue
     @AppStorage("readerBrightness") private var readerBrightness: Double = 0.5
+    @AppStorage("readerLayout") private var readerLayoutRaw = ReaderLayout.paged.rawValue
+    @AppStorage("autoFlipSpeed") private var autoFlipSpeedRaw = AutoFlipSpeed.off.rawValue
+    @AppStorage("volumeKeyFlip") private var volumeKeyFlip = false
 
     // 手势自定义
     @AppStorage("tapLeftAction") private var tapLeftRaw = TapAction.prevPage.rawValue
@@ -96,6 +99,10 @@ struct ReaderView: View {
     private var tapRight: TapAction { TapAction(rawValue: tapRightRaw) ?? .nextPage }
     private var swipeLeft: SwipeAction { SwipeAction(rawValue: swipeLeftRaw) ?? .nextPage }
     private var swipeRight: SwipeAction { SwipeAction(rawValue: swipeRightRaw) ?? .prevPage }
+
+    private var readerLayout: ReaderLayout { ReaderLayout(rawValue: readerLayoutRaw) ?? .paged }
+    private var autoFlipSpeed: AutoFlipSpeed { AutoFlipSpeed(rawValue: autoFlipSpeedRaw) ?? .off }
+    @State private var autoFlipTimer: Timer?
 
     private func isNightTime() -> Bool {
         let hour = Calendar.current.component(.hour, from: Date())
@@ -172,10 +179,37 @@ struct ReaderView: View {
                 currentPage: viewModel.currentPage,
                 totalPages: viewModel.totalPages
             )
+            // 启动自动翻页
+            startAutoFlip()
+            // 启动音量键翻页
+            if volumeKeyFlip {
+                VolumeKeyService.shared.isEnabled = true
+                VolumeKeyService.shared.onVolumeUp = { viewModel.goToNextPage() }
+                VolumeKeyService.shared.onVolumeDown = { viewModel.goToPreviousPage() }
+            }
+            // 成就：记录主题使用
+            AchievementService.shared.trackThemeUsed(effectiveTheme)
+            // iCloud 同步：检查是否有更新的云端进度
+            if ICloudSyncService.shared.isEnabled {
+                let remote = ICloudSyncService.shared.remoteProgress(for: comic.id.uuidString)
+                if let remote = remote, remote.page > viewModel.currentPage {
+                    viewModel.goToPage(remote.page)
+                }
+            }
         }
         .onDisappear {
             endReadingSession()
             liveActivityManager.endActivity()
+            stopAutoFlip()
+            VolumeKeyService.shared.isEnabled = false
+            // iCloud 同步：上传最终进度
+            if ICloudSyncService.shared.isEnabled {
+                ICloudSyncService.shared.syncProgress(
+                    comicID: comic.id.uuidString,
+                    page: viewModel.currentPage,
+                    totalPages: viewModel.totalPages
+                )
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
             endReadingSession()
@@ -191,6 +225,14 @@ struct ReaderView: View {
                 currentPage: viewModel.currentPage,
                 totalPages: viewModel.totalPages
             )
+            // iCloud 同步进度
+            if ICloudSyncService.shared.isEnabled {
+                ICloudSyncService.shared.syncProgress(
+                    comicID: comic.id.uuidString,
+                    page: viewModel.currentPage,
+                    totalPages: viewModel.totalPages
+                )
+            }
         }
         .sheet(isPresented: $showBookmarks) {
             BookmarksView(comic: comic, modelContext: modelContext) { page in
@@ -216,7 +258,9 @@ struct ReaderView: View {
     private var readerContent: some View {
         GeometryReader { geo in
             ZStack {
-                if viewModel.pageMode == .double {
+                if readerLayout == .webtoon {
+                    webtoonView
+                } else if viewModel.pageMode == .double {
                     doublePageView
                 } else {
                     singlePageView
@@ -224,7 +268,7 @@ struct ReaderView: View {
             }
             .frame(width: geo.size.width, height: geo.size.height)
             .contentShape(Rectangle())
-            // 点击区域
+            // 点击区域（条漫模式下也支持点击翻页）
             .onTapGesture { location in
                 handleTap(at: location, in: geo.size)
             }
@@ -242,6 +286,49 @@ struct ReaderView: View {
             )
         }
         .ignoresSafeArea()
+    }
+
+    // MARK: - 条漫模式（长图连续滚动）
+
+    @ViewBuilder
+    private var webtoonView: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.vertical, showsIndicators: false) {
+                LazyVStack(spacing: 0) {
+                    ForEach(0..<viewModel.totalPages, id: \.self) { index in
+                        if let image = viewModel.image(at: index) {
+                            Image(uiImage: image)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(maxWidth: .infinity)
+                                .id(index)
+                                .onAppear {
+                                    // 滚动到该页时更新当前页
+                                    if viewModel.currentPage != index {
+                                        viewModel.goToPage(index)
+                                    }
+                                }
+                                .onLongPressGesture {
+                                    coverSourceImage = image
+                                    showCoverActionSheet = true
+                                }
+                        }
+                    }
+                }
+            }
+            .onAppear {
+                // 跳转到上次阅读位置
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    proxy.scrollTo(viewModel.currentPage, anchor: .top)
+                }
+            }
+            .onChange(of: viewModel.currentPage) { _, newPage in
+                // 非用户滚动导致的翻页（如点击翻页、自动翻页）时滚动到目标页
+                withAnimation {
+                    proxy.scrollTo(newPage, anchor: .top)
+                }
+            }
+        }
     }
 
     // MARK: - 单页模式
@@ -613,6 +700,7 @@ struct ReaderView: View {
             modelContext.insert(bookmark)
             try? modelContext.save()
             showToast("已添加书签 · 第 \(viewModel.currentPage + 1) 页")
+            AchievementService.shared.unlock(.firstBookmark)
         }
         checkBookmarkStatus()
     }
@@ -667,5 +755,26 @@ struct ReaderView: View {
             accumulatedDuration += duration
         }
         sessionStartTime = nil
+    }
+
+    // MARK: - 自动翻页
+
+    private func startAutoFlip() {
+        stopAutoFlip()
+        guard let interval = autoFlipSpeed.interval else { return }
+        autoFlipTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { _ in
+            DispatchQueue.main.async {
+                if viewModel.currentPage < viewModel.totalPages - 1 {
+                    viewModel.goToNextPage()
+                } else {
+                    stopAutoFlip()
+                }
+            }
+        }
+    }
+
+    private func stopAutoFlip() {
+        autoFlipTimer?.invalidate()
+        autoFlipTimer = nil
     }
 }

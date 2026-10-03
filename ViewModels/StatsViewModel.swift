@@ -94,6 +94,23 @@ final class StatsViewModel: ObservableObject {
             .sorted { $0.duration > $1.duration }
 
         self.stats = stats
+
+        // 检测成就
+        let totalMinutes = Int(stats.totalDuration / 60)
+        let finishedCount = (try? modelContext.fetch(FetchDescriptor<Comic>(
+            predicate: #Predicate { $0.readStatus == "finished" }
+        )))?.count ?? 0
+        let favoriteCount = (try? modelContext.fetch(FetchDescriptor<Comic>(
+            predicate: #Predicate { $0.isFavorite == true }
+        )))?.count ?? 0
+        let comicCount = (try? modelContext.fetchCount(FetchDescriptor<Comic>())) ?? 0
+        AchievementService.shared.checkAchievements(
+            totalMinutes: totalMinutes,
+            streak: stats.currentStreak,
+            finishedCount: finishedCount,
+            favoriteCount: favoriteCount,
+            comicCount: comicCount
+        )
     }
 
     private func calculateCurrentStreak(dayBuckets: [Date: TimeInterval], calendar: Calendar, today: Date) -> Int {

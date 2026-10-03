@@ -15,6 +15,8 @@ struct LibraryView: View {
     @State private var showAllBookmarks = false
     @State private var bookmarksComic: Comic?
     @State private var selectedComic: Comic?
+    @State private var detailComic: Comic?
+    @State private var showAchievements = false
 
     // 单个漫画删除
     @State private var showDeleteConfirmation = false
@@ -539,6 +541,11 @@ struct LibraryView: View {
                             .contextMenu {
                                 if !viewModel.isMultiSelectMode {
                                     Button {
+                                        detailComic = comic
+                                    } label: {
+                                        Label("查看详情", systemImage: "info.circle")
+                                    }
+                                    Button {
                                         selectedComic = comic
                                     } label: {
                                         Label("阅读", systemImage: "book")
@@ -625,6 +632,16 @@ struct LibraryView: View {
         }
         .fullScreenCover(item: $selectedComic) { comic in
             ReaderView(comic: comic, modelContext: modelContext)
+        }
+        .sheet(item: $detailComic) { comic in
+            NavigationStack {
+                ComicDetailView(comic: comic)
+            }
+        }
+        .sheet(isPresented: $showAchievements) {
+            NavigationStack {
+                AchievementsView()
+            }
         }
     }
 
