@@ -112,7 +112,7 @@ struct ComicDetailView: View {
         .navigationTitle("详情")
         .navigationBarTitleDisplayMode(.inline)
         .fullScreenCover(isPresented: $showReader) {
-            ReaderView(comic: comic)
+            ReaderView(comic: comic, modelContext: modelContext)
         }
         .onAppear(perform: loadData)
     }
