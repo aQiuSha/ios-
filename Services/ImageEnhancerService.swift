@@ -114,14 +114,14 @@ final class ImageEnhancerService {
         let brightness: Float
         switch level {
         case .light:
-            contrast = 1.1
+            contrast = Float(1.1)
             brightness = 0
         case .medium:
-            contrast = 1.18
-            brightness = 0.01
+            contrast = Float(1.18)
+            brightness = Float(0.01)
         case .strong:
-            contrast = 1.25
-            brightness = 0.02
+            contrast = Float(1.25)
+            brightness = Float(0.02)
         default:
             contrast = 1.0
             brightness = 0
@@ -146,20 +146,19 @@ final class ImageEnhancerService {
 
     // MARK: - Vision AI 增强
 
-    /// 使用 Vision 框架的 AI 图像增强
-    /// 利用 Apple Neural Engine 本地推理，自动优化亮度、对比度、降噪、细节
+    /// 使用 Vision 框架的 AI 图像增强（iOS 18+）
+    /// iOS 17 退回 nil，由调用方使用 Core Image 管线
     private func applyVisionAIEnhancement(_ image: UIImage) -> UIImage? {
+        guard #available(iOS 18.0, *) else { return nil }
         guard let cgImage = image.cgImage else { return nil }
 
         let request = VNGenerateImageEnhancementRequest()
-        // 使用 balanced 级别，在质量和速度间平衡
         request.level = .balanced
 
         let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
         do {
             try handler.perform([request])
             guard let observation = request.results?.first else { return nil }
-            // observation.image 是 CIImage 格式
             let enhancedCIImage = observation.image
             guard let enhancedCGImage = ciContext.createCGImage(enhancedCIImage, from: enhancedCIImage.extent) else {
                 return nil

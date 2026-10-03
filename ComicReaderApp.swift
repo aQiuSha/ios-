@@ -53,6 +53,9 @@ struct ComicReaderApp: App {
                     .onOpenURL { url in
                         handleDeepLink(url)
                     }
+                    .onAppear {
+                        checkAppLock()
+                    }
 
                 // App 密码锁覆盖层
                 if showAppLock {
@@ -76,12 +79,10 @@ struct ComicReaderApp: App {
                 checkAppLock()
             }
         }
-        .onAppear {
-            checkAppLock()
-        }
     }
 
     /// 检查是否需要显示密码锁
+    @MainActor
     private func checkAppLock() {
         if AppLockService.shared.needsAuthentication {
             showAppLock = true
@@ -118,6 +119,7 @@ struct ComicReaderApp: App {
     }
 
     /// 打开最近阅读的漫画（comicreader://continue）
+    @MainActor
     private func openContinueReading() {
         let context = container.mainContext
 
@@ -148,8 +150,7 @@ struct ComicReaderApp: App {
     // MARK: - Widget 数据同步
 
     /// 同步 Widget 所需数据到 App Group 共享容器
-    /// 在 App 进入后台和回到前台时自动调用
-    /// 也可在阅读进度更新时手动调用（通过 WidgetSyncManager.shared）
+    @MainActor
     private func syncWidgetData() {
         let context = container.mainContext
         WidgetSyncManager.shared.syncWidgetData(modelContext: context)

@@ -121,7 +121,7 @@ struct BookmarksView: View {
                 } else {
                     Text("无备注")
                         .font(.caption)
-                        .foregroundColor(.tertiary)
+                        .foregroundStyle(.tertiary)
                 }
                 Text(bookmark.timeAgo)
                     .font(.caption2)

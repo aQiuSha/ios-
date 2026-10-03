@@ -85,7 +85,7 @@ final class ArchiveService {
         }
 
         let fileManager = FileManager.default
-        var entry = archive_entry()
+        var entry: OpaquePointer? = nil
 
         // 遍历所有条目
         while archive_read_next_header(archive, &entry) == ARCHIVE_OK {
@@ -378,7 +378,7 @@ final class ArchiveService {
             try archive.addEntry(
                 with: fileName,
                 type: .file,
-                uncompressedSize: Int64(data.count),
+                uncompressedSize: UInt32(data.count),
                 provider: { position, size in
                     data.subdata(in: position..<(position + size))
                 }

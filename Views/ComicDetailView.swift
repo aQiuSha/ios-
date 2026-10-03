@@ -50,12 +50,12 @@ struct ComicDetailView: View {
                         }
 
                         // 阅读状态
-                        Text(comic.readStatus.displayName)
+                        Text(comic.effectiveReadingStatus.displayName)
                             .font(.caption)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
-                            .background(comic.readStatus.color.opacity(0.2))
-                            .foregroundColor(comic.readStatus.color)
+                            .background(Color(uiColor: comic.effectiveReadingStatus.color).opacity(0.2))
+                            .foregroundColor(Color(uiColor: comic.effectiveReadingStatus.color))
                             .cornerRadius(4)
                     }
                 }
@@ -121,16 +121,17 @@ struct ComicDetailView: View {
     }
 
     private func loadData() {
+        let comicID = comic.id
         // 加载阅读历史
         let descriptor = FetchDescriptor<ReadingSession>(
-            predicate: #Predicate { $0.comic?.persistentModelID == comic.persistentModelID },
-            sortBy: [SortDescriptor(\.date, order: .reverse)]
+            predicate: #Predicate { $0.comic?.id == comicID },
+            sortBy: [SortDescriptor(\.startTime, order: .reverse)]
         )
         readingSessions = (try? modelContext.fetch(descriptor)) ?? []
 
         // 加载书签
         let bookmarkDescriptor = FetchDescriptor<Bookmark>(
-            predicate: #Predicate { $0.comic?.persistentModelID == comic.persistentModelID },
+            predicate: #Predicate { $0.comic?.id == comicID },
             sortBy: [SortDescriptor(\.page)]
         )
         bookmarks = (try? modelContext.fetch(bookmarkDescriptor)) ?? []

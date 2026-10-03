@@ -12,7 +12,7 @@ final class Folder {
     /// 是否为隐私文件夹（默认 false，带默认值的字段为 SwiftData 轻量迁移兼容）
     var isPrivate: Bool = false
 
-    @Relationship(deleteRule: .nullify, inverse: \Comic.folder)
+    @Relationship(deleteRule: .nullify)
     var comics: [Comic]?
 
     init(

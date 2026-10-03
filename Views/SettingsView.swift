@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import PhotosUI
 
 /// 设置页面

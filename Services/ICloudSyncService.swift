@@ -74,7 +74,7 @@ final class ICloudSyncService {
 
     /// 获取云端总阅读时长
     var remoteTotalMinutes: Int {
-        store.longLong(forKey: totalMinutesKey)
+        Int(store.longLong(forKey: totalMinutesKey))
     }
 
     // MARK: - 冲突解决
