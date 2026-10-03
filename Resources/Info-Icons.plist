@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+    ============================================================
+    App 图标配置片段
+    ============================================================
+    使用方法：将下方 <key>CFBundleIcons</key> 及其 <dict> 内容
+    合并到主项目的 Info.plist 中。
+
+    注意：如果主 Info.plist 已有 CFBundleIcons 节点，请将
+    CFBundleAlternateIcons 部分合并进去，不要重复添加。
+
+    Xcode 15+ 也可以通过 Build Settings 中的
+    "Asset Catalog App Icon Set Name" 来配置主图标。
+    ============================================================
+    -->
+    <key>CFBundleIcons</key>
+    <dict>
+        <!-- 主图标（默认图标，对应 Assets.xcassets 中的 AppIcon 集合） -->
+        <key>CFBundlePrimaryIcon</key>
+        <dict>
+            <key>CFBundleIconName</key>
+            <string>AppIcon</string>
+            <key>CFBundleIconFiles</key>
+            <array>
+                <string>AppIcon</string>
+            </array>
+        </dict>
+
+        <!-- 备选图标列表 -->
+        <key>CFBundleAlternateIcons</key>
+        <dict>
+            <!-- 深色版图标（对应 AppIcon-Dark 集合） -->
+            <key>dark</key>
+            <dict>
+                <key>CFBundleIconName</key>
+                <string>AppIcon-Dark</string>
+                <key>CFBundleIconFiles</key>
+                <array>
+                    <string>AppIcon-Dark</string>
+                </array>
+            </dict>
+
+            <!-- 漫画风图标（对应 AppIcon-Manga 集合） -->
+            <key>manga</key>
+            <dict>
+                <key>CFBundleIconName</key>
+                <string>AppIcon-Manga</string>
+                <key>CFBundleIconFiles</key>
+                <array>
+                    <string>AppIcon-Manga</string>
+                </array>
+            </dict>
+
+            <!-- 简约风图标（对应 AppIcon-Minimal 集合） -->
+            <key>minimal</key>
+            <dict>
+                <key>CFBundleIconName</key>
+                <string>AppIcon-Minimal</string>
+                <key>CFBundleIconFiles</key>
+                <array>
+                    <string>AppIcon-Minimal</string>
+                </array>
+            </dict>
+        </dict>
+    </dict>
+</dict>
+</plist>

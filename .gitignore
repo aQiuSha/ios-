@@ -1,0 +1,30 @@
+# Xcode
+build/
+*.xcodeproj/
+*.xcworkspace/
+*.xcuserstate
+xcuserdata/
+DerivedData/
+*.moved-aside
+*.xccheckout
+*.scmresults
+
+# 编译产物
+*.app
+*.ipa
+*.xcarchive
+
+# 临时文件
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+
+# 证书和签名（不要提交到仓库）
+*.p12
+*.mobileprovision
+*.cer
+
+# XcodeGen 生成的项目（CI 会自动生成）
+# 如果你想本地保留 xcodeproj，注释掉下一行
+# ComicReader.xcodeproj/
