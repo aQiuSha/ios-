@@ -44,15 +44,14 @@ enum ReaderTheme: String, Codable, CaseIterable {
     var uiForeground: Color {
         switch self {
         case .white, .eyeGreen: return .black
-        case .darkGray, .pureBlack, .darkBrown: return .white
+        case .darkGray, .pureBlack, .darkBrown, .custom: return .white
         }
     }
 
     /// 次要 UI 颜色
     var uiSecondary: Color {
         switch self {
-        case .white, .eyeGreen: return .gray
-        case .darkGray, .pureBlack, .darkBrown: return .gray
+        case .white, .eyeGreen, .darkGray, .pureBlack, .darkBrown, .custom: return .gray
         }
     }
 
@@ -61,9 +60,7 @@ enum ReaderTheme: String, Codable, CaseIterable {
         switch self {
         case .white: return [Color.black.opacity(0.15), .clear]
         case .eyeGreen: return [Color.black.opacity(0.12), .clear]
-        case .darkGray: return [Color.black.opacity(0.8), .clear]
-        case .pureBlack: return [Color.black.opacity(0.8), .clear]
-        case .darkBrown: return [Color.black.opacity(0.8), .clear]
+        case .darkGray, .pureBlack, .darkBrown, .custom: return [Color.black.opacity(0.8), .clear]
         }
     }
 }
