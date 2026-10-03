@@ -51,13 +51,26 @@ jobs:
         env:
           NSUnbufferedIO: YES
 
+      - name: 定位并复制 .app 产物
+        if: success()
+        run: |
+          APP_PATH=$(find build -name "ComicReader.app" -type d | head -1)
+          if [ -n "$APP_PATH" ]; then
+            echo "找到 .app: $APP_PATH"
+            mkdir -p artifact
+            cp -R "$APP_PATH" artifact/
+          else
+            echo "未找到 .app，搜索中..."
+            find . -name "ComicReader.app" -type d 2>/dev/null || true
+          fi
+        continue-on-error: true
+
       - name: 上传编译产物（.app）
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ComicReader-App
-          path: |
-            ${{ github.workspace }}/build/Build/Products/Debug-iphonesimulator/ComicReader.app
+          path: artifact/ComicReader.app
           retention-days: 30
 
       - name: 上传完整编译日志（失败时）
