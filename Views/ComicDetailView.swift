@@ -94,19 +94,16 @@ struct ComicDetailView: View {
             // 阅读历史
             if !readingSessions.isEmpty {
                 Section("阅读历史") {
-                    ForEach(readingSessions.prefix(20)) { session in
+                    ForEach(Array(readingSessions.prefix(20))) { session in
                         HStack {
                             VStack(alignment: .leading) {
-                                Text(formattedDate(session.date))
+                                Text(formattedDate(session.startTime))
                                     .font(.subheadline)
                                 Text("阅读 \(formatDuration(session.duration))")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
                             Spacer()
-                            Text("第 \(session.endPage + 1) 页")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
                         }
                     }
                 }

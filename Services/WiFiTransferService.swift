@@ -2,10 +2,11 @@ import Foundation
 import Network
 import UIKit
 import SwiftData
+import Combine
 
 /// WiFi 传书服务：在设备上启动本地 HTTP 服务器，
 /// 同一局域网内通过浏览器上传漫画文件。
-final class WiFiTransferService: NSObject {
+final class WiFiTransferService: NSObject, ObservableObject {
     static let shared = WiFiTransferService()
 
     @Published var isRunning = false

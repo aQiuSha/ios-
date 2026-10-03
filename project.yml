@@ -40,7 +40,12 @@ targets:
       - path: Services
       - path: AppIntents
       - path: LiveActivity
+        excludes:
+          - "LIVE_ACTIVITY_SETUP.md"
+          - "ReadingActivityWidget.swift"
       - path: Widget/Shared/WidgetSyncManager.swift
+      - path: Widget/Shared/AppGroupData.swift
+      - path: Widget/Shared/WidgetDataModel.swift
       - path: Resources
         excludes:
           - "*.md"

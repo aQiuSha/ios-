@@ -98,7 +98,7 @@ final class StatsViewModel: ObservableObject {
         // 检测成就
         let totalMinutes = Int(stats.totalDuration / 60)
         let finishedCount = (try? modelContext.fetch(FetchDescriptor<Comic>(
-            predicate: #Predicate { $0.readStatus == "finished" }
+            predicate: #Predicate { $0.readingStatus == "finished" }
         )))?.count ?? 0
         let favoriteCount = (try? modelContext.fetch(FetchDescriptor<Comic>(
             predicate: #Predicate { $0.isFavorite == true }

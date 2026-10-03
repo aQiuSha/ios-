@@ -668,7 +668,7 @@ struct ReaderView: View {
     // MARK: - 书签操作
 
     private func checkBookmarkStatus() {
-        let comicID = comic.id
+        let comicID: UUID? = comic.id
         let descriptor = FetchDescriptor<Bookmark>(
             predicate: #Predicate { bookmark in
                 bookmark.page == viewModel.currentPage &&
@@ -682,10 +682,11 @@ struct ReaderView: View {
     private func toggleBookmark() {
         if isCurrentPageBookmarked {
             // 删除当前页书签
+            let comicID: UUID? = comic.id
             let descriptor = FetchDescriptor<Bookmark>(
                 predicate: #Predicate { bookmark in
                     bookmark.page == viewModel.currentPage &&
-                    bookmark.comic?.id == comic.id
+                    bookmark.comic?.id == comicID
                 }
             )
             if let bookmarks = try? modelContext.fetch(descriptor) {

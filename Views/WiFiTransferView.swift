@@ -201,7 +201,7 @@ struct WiFiTransferView: View {
     }
 
     private func setupFileCallback() {
-        transferService.onFileReceived = { fileURL in
+        transferService.onFileReceived = { (fileURL: URL) in
             Task { @MainActor in
                 isImporting = true
                 defer { isImporting = false }
