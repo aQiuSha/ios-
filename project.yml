@@ -80,6 +80,7 @@ targets:
           - "WIDGET_SETUP.md"
       # Widget 需要访问数据模型
       - path: Models/Comic.swift
+      - path: Models/Folder.swift
       - path: Models/ReadingSession.swift
       - path: Models/ReaderPreferences.swift
     settings:
