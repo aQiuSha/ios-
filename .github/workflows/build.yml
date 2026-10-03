@@ -5,7 +5,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:
 
 jobs:
   build:
@@ -20,29 +20,31 @@ jobs:
       - name: 安装 XcodeGen
         run: brew install xcodegen
 
+      - name: 安装 xcpretty
+        run: gem install xcpretty
+
       - name: 生成 Xcode 项目
         run: xcodegen generate
-        working-directory: ComicReader
 
       - name: 列出 Xcode 版本
         run: xcodebuild -version
 
       - name: 解析 Swift Package 依赖
-        run: xcodebuild -resolvePackageDependencies -project ComicReader/ComicReader.xcodeproj
-        working-directory: ${{ github.workspace }}
+        run: xcodebuild -resolvePackageDependencies -project ComicReader.xcodeproj
 
       - name: 编译（模拟器，无需签名）
         run: |
           xcodebuild build \
-            -project ComicReader/ComicReader.xcodeproj \
+            -project ComicReader.xcodeproj \
             -scheme ComicReader \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+            -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             | xcpretty
-        working-directory: ${{ github.workspace }}
+        env:
+          NSUnbufferedIO: YES
 
       - name: 上传编译产物（.app）
         if: success()
@@ -53,10 +55,24 @@ jobs:
             ${{ github.workspace }}/build/Debug-iphonesimulator/ComicReader.app
           retention-days: 30
 
-      - name: 上传编译日志（失败时）
+      - name: 上传完整编译日志（失败时）
+        if: failure()
+        run: |
+          xcodebuild build \
+            -project ComicReader.xcodeproj \
+            -scheme ComicReader \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            > build.log 2>&1 || true
+        continue-on-error: true
+
+      - name: 上传日志文件
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: build-logs
-          path: ${{ github.workspace }}/**/*.log
+          path: build.log
           retention-days: 7

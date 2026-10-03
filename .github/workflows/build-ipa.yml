@@ -18,7 +18,6 @@ jobs:
 
       - name: 生成 Xcode 项目
         run: xcodegen generate
-        working-directory: ComicReader
 
       - name: 导入签名证书
         env:
@@ -52,7 +51,7 @@ jobs:
       - name: 编译真机版本
         run: |
           xcodebuild build \
-            -project ComicReader/ComicReader.xcodeproj \
+            -project ComicReader.xcodeproj \
             -scheme ComicReader \
             -destination 'generic/platform=iOS' \
             -configuration Release \
