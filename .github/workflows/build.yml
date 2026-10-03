@@ -26,9 +26,9 @@ jobs:
       - name: 生成 Xcode 项目
         run: |
           xcodegen generate
-          # 降级项目格式版本，兼容 Xcode 15.4
-          plutil -replace objectVersion -integer 56 ComicReader.xcodeproj/project.pbxproj
-          echo "objectVersion: $(plutil -extract objectVersion raw ComicReader.xcodeproj/project.pbxproj)"
+          # 降级项目格式版本（objectVersion 77 -> 56），兼容 Xcode 15.4
+          sed -i '' 's/objectVersion = 77;/objectVersion = 56;/' ComicReader.xcodeproj/project.pbxproj
+          grep objectVersion ComicReader.xcodeproj/project.pbxproj | head -1
 
       - name: 列出 Xcode 版本
         run: xcodebuild -version
