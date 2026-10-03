@@ -1,0 +1,91 @@
+name: 构建未签名 IPA（Windows 用 Sideloadly 签名安装）
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/build-unsigned-ipa.yml'
+
+jobs:
+  build-unsigned-ipa:
+    name: 构建未签名 IPA
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 XcodeGen
+        run: brew install xcodegen
+
+      - name: 生成 Xcode 项目
+        run: |
+          xcodegen generate
+          sed -i '' 's/objectVersion = 77;/objectVersion = 56;/' ComicReader.xcodeproj/project.pbxproj
+
+      - name: 编译真机版本（未签名）
+        run: |
+          xcodebuild \
+            -project ComicReader.xcodeproj \
+            -scheme ComicReader \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_ENTITLEMENTS="" \
+            ENABLE_BITCODE=NO \
+            build 2>&1 | tee build.log | tail -30
+
+      - name: 查找 .app 并打包为 IPA
+        run: |
+          # 查找真机编译的 .app
+          APP_PATH=$(find build -name "ComicReader.app" -type d -path "*Release-iphoneos*" | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "未找到 Release-iphoneos .app，尝试所有 .app:"
+            find build -name "ComicReader.app" -type d
+            APP_PATH=$(find build -name "ComicReader.app" -type d | head -1)
+          fi
+
+          if [ -z "$APP_PATH" ]; then
+            echo "错误：未找到 .app 文件"
+            exit 1
+          fi
+
+          echo "找到 .app: $APP_PATH"
+
+          # 创建 IPA 结构：Payload/ComicReader.app
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+
+          # 移除模拟器架构（如果有），确保只保留真机架构
+          APP_BINARY="Payload/ComicReader.app/ComicReader"
+          if [ -f "$APP_BINARY" ]; then
+            echo "二进制架构:"
+            lipo -info "$APP_BINARY" 2>/dev/null || true
+          fi
+
+          # 打包为 IPA
+          IPA_NAME="ComicReader-unsigned.ipa"
+          zip -r "$IPA_NAME" Payload/
+          echo "IPA 已生成: $IPA_NAME"
+          ls -lh "$IPA_NAME"
+
+      - name: 上传未签名 IPA
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ComicReader-unsigned-IPA
+          path: ComicReader-unsigned.ipa
+          retention-days: 90
+
+      - name: 上传编译日志（失败时）
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          retention-days: 7
