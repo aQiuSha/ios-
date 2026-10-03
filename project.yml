@@ -10,8 +10,6 @@ options:
   createIntermediateGroups: true
   groupSortPosition: bottom
   generateEmptyDirectories: true
-  xcodeVersion: "15.0"
-  projectFormat: "14.0"
 
 # Swift Package Manager 依赖
 packages:
