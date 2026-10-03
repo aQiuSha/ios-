@@ -27,6 +27,7 @@ jobs:
 
       - name: 编译真机版本（未签名）
         run: |
+          set -o pipefail
           xcodebuild \
             -project ComicReader.xcodeproj \
             -scheme ComicReader \
@@ -38,7 +39,7 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_ENTITLEMENTS="" \
             ENABLE_BITCODE=NO \
-            build 2>&1 | tee build.log | tail -30
+            build 2>&1 | tee build.log | tail -50
 
       - name: 查找 .app 并打包为 IPA
         run: |

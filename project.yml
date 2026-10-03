@@ -77,6 +77,10 @@ targets:
       - path: Widget
         excludes:
           - "WIDGET_SETUP.md"
+      # Widget 需要访问数据模型
+      - path: Models/Comic.swift
+      - path: Models/ReadingSession.swift
+      - path: Models/ReaderPreferences.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.comicreader.app.widget
