@@ -17,9 +17,6 @@ struct ReaderView: View {
     @State private var sessionStartTime: Date?
     @State private var accumulatedDuration: TimeInterval = 0
 
-    // 实时活动
-    @StateObject private var liveActivityManager = LiveActivityManager.shared
-
     // 自定义背景
     @State private var customBackgroundImage: UIImage?
     @AppStorage("customBackgroundBlur") private var customBackgroundBlur: Double = 20
@@ -172,13 +169,6 @@ struct ReaderView: View {
             }
             // 加载自定义背景
             customBackgroundImage = FileStorageService.shared.loadCustomBackground()
-            // 启动实时活动
-            liveActivityManager.startActivity(
-                comicID: comic.id.uuidString,
-                title: comic.title,
-                currentPage: viewModel.currentPage,
-                totalPages: viewModel.totalPages
-            )
             // 启动自动翻页
             startAutoFlip()
             // 启动音量键翻页
@@ -189,50 +179,20 @@ struct ReaderView: View {
             }
             // 成就：记录主题使用
             AchievementService.shared.trackThemeUsed(effectiveTheme)
-            // iCloud 同步：检查是否有更新的云端进度
-            if ICloudSyncService.shared.isEnabled {
-                let remote = ICloudSyncService.shared.remoteProgress(for: comic.id.uuidString)
-                if let remote = remote, remote.page > viewModel.currentPage {
-                    viewModel.goToPage(remote.page)
-                }
-            }
         }
         .onDisappear {
             endReadingSession()
-            liveActivityManager.endActivity()
             stopAutoFlip()
             VolumeKeyService.shared.isEnabled = false
-            // iCloud 同步：上传最终进度
-            if ICloudSyncService.shared.isEnabled {
-                ICloudSyncService.shared.syncProgress(
-                    comicID: comic.id.uuidString,
-                    page: viewModel.currentPage,
-                    totalPages: viewModel.totalPages
-                )
-            }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
             endReadingSession()
-            liveActivityManager.pause()
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             startReadingSession()
-            liveActivityManager.resume()
         }
         .onChange(of: viewModel.currentPage) { _, _ in
             checkBookmarkStatus()
-            liveActivityManager.updateActivity(
-                currentPage: viewModel.currentPage,
-                totalPages: viewModel.totalPages
-            )
-            // iCloud 同步进度
-            if ICloudSyncService.shared.isEnabled {
-                ICloudSyncService.shared.syncProgress(
-                    comicID: comic.id.uuidString,
-                    page: viewModel.currentPage,
-                    totalPages: viewModel.totalPages
-                )
-            }
         }
         .sheet(isPresented: $showBookmarks) {
             BookmarksView(comic: comic, modelContext: modelContext) { page in

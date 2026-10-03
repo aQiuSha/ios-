@@ -20,13 +20,13 @@ struct SettingsView: View {
     @AppStorage("readerLayout") private var readerLayoutRaw = ReaderLayout.paged.rawValue
     @AppStorage("autoFlipSpeed") private var autoFlipSpeedRaw = AutoFlipSpeed.off.rawValue
     @AppStorage("volumeKeyFlip") private var volumeKeyFlip = false
+    @AppStorage("preloadNextPage") private var preloadNextPage = true
+    @AppStorage("lockLandscape") private var lockLandscape = false
+    @AppStorage("defaultSort") private var defaultSort = SortOption.dateAdded.rawValue
 
     // App 密码锁
     @State private var showSetPIN = false
     @State private var showDisableLockConfirmation = false
-
-    // iCloud 同步
-    @AppStorage("iCloudSyncEnabled") private var iCloudSyncEnabled = false
 
     // 图片预处理
     @AppStorage("autoCropWhiteBorder") private var autoCropWhiteBorder = false
@@ -55,17 +55,11 @@ struct SettingsView: View {
     // 强调色
     @AppStorage("accentColor") private var accentColorRaw = AccentColor.blue.rawValue
 
-    // 实时活动
-    @StateObject private var liveActivityManager = LiveActivityManager.shared
-
     @State private var totalStorageSize: String = "计算中..."
     @State private var cacheSize: String = "计算中..."
     @State private var showWiFiTransfer = false
     @State private var showClearCacheConfirmation = false
     @StateObject private var privacyAuthService = PrivacyAuthService.shared
-    @StateObject private var iconManager = AppIconManager.shared
-    @State private var showIconError = false
-    @State private var iconErrorMessage = ""
 
     var body: some View {
         NavigationStack {
@@ -107,6 +101,20 @@ struct SettingsView: View {
                         Text("按音量+下一页，音量-上一页。系统音量不会改变。")
                             .font(.caption)
                             .foregroundColor(.secondary)
+                    }
+
+                    Toggle("预加载下一页", isOn: $preloadNextPage)
+                    Toggle("横屏锁定", isOn: $lockLandscape)
+                    if lockLandscape {
+                        Text("阅读时锁定横屏方向，避免躺下看书时屏幕翻转。")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
+                    Picker("默认排序", selection: $defaultSort) {
+                        ForEach(LibraryViewModel.SortOption.allCases, id: \.self) { sort in
+                            Text(sort.rawValue).tag(sort.rawValue)
+                        }
                     }
                 }
 
@@ -379,39 +387,6 @@ struct SettingsView: View {
                     Text("确定要关闭 App 密码锁吗？PIN 码将被清除。")
                 }
 
-                // MARK: - iCloud 同步
-                Section("iCloud 同步") {
-                    Toggle("启用 iCloud 同步", isOn: Binding(
-                        get: { iCloudSyncEnabled },
-                        set: {
-                            iCloudSyncEnabled = $0
-                            ICloudSyncService.shared.isEnabled = $0
-                        }
-                    ))
-                    .disabled(!ICloudSyncService.shared.isAvailable)
-                    if !ICloudSyncService.shared.isAvailable {
-                        Text("当前未登录 iCloud 或未启用 iCloud 功能。请在系统设置中登录 iCloud。")
-                            .font(.caption)
-                            .foregroundColor(.orange)
-                    }
-                    Text("同步阅读进度到 iCloud，多设备间自动同步。仅同步进度数据，不同步漫画文件。")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                // MARK: - 灵动岛与实时活动
-                Section("灵动岛与锁屏") {
-                    Toggle("启用实时活动", isOn: $liveActivityManager.isEnabled)
-                    if !liveActivityManager.isSupported {
-                        Text("当前设备或系统版本不支持实时活动（需 iOS 16.1+ 及支持灵动岛的设备）")
-                            .font(.caption)
-                            .foregroundColor(.orange)
-                    }
-                    Text("阅读时在灵动岛和锁屏显示漫画进度、页码和阅读时长，点击可快速回到阅读器。")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
                 // MARK: - 存储与缓存
                 Section("存储与缓存") {
                     HStack {
@@ -436,6 +411,32 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                 }
 
+                Section("数据") {
+                    NavigationLink {
+                        StatsView(modelContext: modelContext)
+                    } label: {
+                        HStack {
+                            Label("阅读统计", systemImage: "chart.bar.fill")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .foregroundColor(.primary)
+
+                    NavigationLink {
+                        AchievementsView()
+                    } label: {
+                        HStack {
+                            Label("阅读成就", systemImage: "trophy.fill")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .foregroundColor(.primary)
+                }
+
                 Section("传输") {
                     Button {
                         showWiFiTransfer = true
@@ -450,49 +451,6 @@ struct SettingsView: View {
                     .foregroundColor(.primary)
                 }
 
-                // MARK: - App 图标
-                Section {
-                    ForEach(iconManager.availableIcons) { option in
-                        Button {
-                            Task {
-                                do {
-                                    try await iconManager.setIcon(option)
-                                } catch {
-                                    iconErrorMessage = error.localizedDescription
-                                    showIconError = true
-                                }
-                            }
-                        } label: {
-                            HStack(spacing: 12) {
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color(.secondarySystemBackground))
-                                    .frame(width: 48, height: 48)
-                                    .overlay(
-                                        Image(systemName: option.previewSymbol)
-                                            .font(.system(size: 22))
-                                            .foregroundColor(.primary)
-                                    )
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(option.name)
-                                        .foregroundColor(.primary)
-                                    Text(option.description)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                Spacer()
-                                if iconManager.currentIconName == option.id {
-                                    Image(systemName: "checkmark")
-                                        .foregroundColor(.blue)
-                                        .fontWeight(.semibold)
-                                }
-                            }
-                        }
-                    }
-                } header: {
-                    Text("App 图标")
-                } footer: {
-                    Text("选择你喜欢的应用图标样式")
-                }
 
                 Section("关于") {
                     HStack {
@@ -556,11 +514,6 @@ struct SettingsView: View {
                 Button("取消", role: .cancel) {}
             } message: {
                 Text("将清理缩略图缓存和 WiFi 传书临时文件，不影响漫画源文件。")
-            }
-            .alert("切换图标失败", isPresented: $showIconError) {
-                Button("确定", role: .cancel) {}
-            } message: {
-                Text(iconErrorMessage)
             }
             .sheet(isPresented: $showWiFiTransfer) {
                 WiFiTransferView(modelContext: modelContext)

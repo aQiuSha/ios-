@@ -38,14 +38,6 @@ targets:
       - path: Views
       - path: ViewModels
       - path: Services
-      - path: AppIntents
-      - path: LiveActivity
-        excludes:
-          - "LIVE_ACTIVITY_SETUP.md"
-          - "ReadingActivityWidget.swift"
-      - path: Widget/Shared/WidgetSyncManager.swift
-      - path: Widget/Shared/AppGroupData.swift
-      - path: Widget/Shared/WidgetDataModel.swift
       - path: Resources
         excludes:
           - "*.md"
@@ -63,34 +55,11 @@ targets:
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: 用于选择漫画封面和阅读背景图片
         INFOPLIST_KEY_NSFaceIDUsageDescription: 用于验证身份以打开隐私文件夹
-        INFOPLIST_KEY_NSSupportsLiveActivities: YES
         INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: YES
         INFOPLIST_KEY_UIFileSharingEnabled: YES
         # libarchive 桥接头（手动声明函数，不依赖SDK头文件）
         SWIFT_OBJC_BRIDGING_HEADER: Services/libarchiveBridge.h
         # 链接系统库
         OTHER_LDFLAGS: "-larchive"
-        # App Group（Widget 共享数据）
-        INFOPLIST_KEY_ComicReaderAppGroup: group.com.comicreader.shared
-    dependencies:
-      - package: ZIPFoundation
-      - target: ComicReaderWidget
-
-  # ==================== Widget Extension Target ====================
-  ComicReaderWidget:
-    type: app-extension
-    platform: iOS
-    deploymentTarget: "17.0"
-    sources:
-      - path: Widget
-        excludes:
-          - "WIDGET_SETUP.md"
-          - "Shared/WidgetSyncManager.swift"
-          - "Info.plist"
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.comicreader.app.widget
-        INFOPLIST_FILE: Widget/Info.plist
-        INFOPLIST_KEY_ComicReaderAppGroup: group.com.comicreader.shared
     dependencies:
       - package: ZIPFoundation

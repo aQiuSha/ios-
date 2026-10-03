@@ -174,16 +174,6 @@ struct LibraryView: View {
             .onAppear {
                 viewModel.showFavoritesOnly = showFavoritesOnly
             }
-            // 深度链接 / Widget / App Intent 打开漫画
-            .onReceive(NotificationCenter.default.publisher(for: .openComicFromIntent)) { note in
-                guard let comicID = note.userInfo?["comicID"] as? UUID else { return }
-                if let comic = viewModel.comics.first(where: { $0.id == comicID }) {
-                    selectedComic = comic
-                }
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .showStatsFromDeepLink)) { _ in
-                showStats = true
-            }
             // Sheets
             .sheet(isPresented: $showFilePicker) {
                 DocumentPickerView { url in
